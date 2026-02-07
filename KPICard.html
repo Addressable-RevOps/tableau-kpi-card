@@ -177,6 +177,39 @@
       opacity: .7;
     }
 
+    /* ---- Sparkline hover ---- */
+    .spark-guide {
+      stroke: #c4c9d0;
+      stroke-width: 1;
+      stroke-dasharray: 3, 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .spark-guide.visible { opacity: 1; }
+    .spark-tooltip-bg {
+      fill: #fff;
+      stroke: #e2e6ea;
+      stroke-width: 1;
+      rx: 6;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
+    }
+    .spark-tooltip-val {
+      font-size: 12px;
+      font-weight: 700;
+      fill: #1a1a2e;
+    }
+    .spark-tooltip-lbl {
+      font-size: 10px;
+      font-weight: 400;
+      fill: #8e99a4;
+    }
+    .spark-tooltip-ptd {
+      font-size: 10.5px;
+      font-weight: 600;
+      fill: var(--brand-purple);
+    }
+
     /* ---- Sparkline legend ---- */
     .spark-legend {
       display: flex;

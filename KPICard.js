@@ -51,6 +51,8 @@
     padTop:        'kpi_padTop',
     padLeft:       'kpi_padLeft',
     cardWidth:     'kpi_cardWidth',
+    // Gradient
+    gradColor:     'kpi_gradColor',
     // Link
     linkUrl:       'kpi_linkUrl',
     linkLabel:     'kpi_linkLabel',
@@ -98,6 +100,7 @@
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
       'padTop', 'padLeft', 'cardWidth',
+      'gradColor',
       'linkUrl', 'linkLabel', 'linkIcon'
     ];
     for (const key of stringKeys) {
@@ -855,6 +858,57 @@
       parent.appendChild(group);
     }
 
+    function addColorField (parent, labelText, key, defaultColor, hint) {
+      const group = document.createElement('div');
+      group.className = 'settings-group';
+
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+
+      const lbl = document.createElement('label');
+      lbl.textContent = labelText;
+      lbl.style.flex = '1';
+      lbl.style.marginBottom = '0';
+      row.appendChild(lbl);
+
+      const colorInp = document.createElement('input');
+      colorInp.type = 'color';
+      colorInp.value = settings[key] || defaultColor;
+      colorInp.dataset.key = key;
+      colorInp.style.width = '32px';
+      colorInp.style.height = '28px';
+      colorInp.style.border = '1px solid #ddd';
+      colorInp.style.borderRadius = '6px';
+      colorInp.style.cursor = 'pointer';
+      colorInp.style.padding = '2px';
+      colorInp.addEventListener('input', onInput);
+      row.appendChild(colorInp);
+
+      // Reset button (icon)
+      const btnDef = document.createElement('button');
+      btnDef.className = 'settings-btn settings-btn-cancel';
+      btnDef.innerHTML = '&#8634;';
+      btnDef.title = 'Reset to default';
+      btnDef.style.cssText = 'font-size:16px;padding:2px 4px;line-height:1;color:#a0aab4;cursor:pointer;';
+      btnDef.addEventListener('click', () => {
+        colorInp.value = defaultColor;
+        colorInp.dispatchEvent(new Event('input'));
+      });
+      row.appendChild(btnDef);
+      group.appendChild(row);
+
+      if (hint) {
+        const hintEl = document.createElement('div');
+        hintEl.className = 'settings-hint';
+        hintEl.textContent = hint;
+        group.appendChild(hintEl);
+      }
+
+      parent.appendChild(group);
+    }
+
     function addDropdown (parent, labelText, key, options, hint) {
       const group = document.createElement('div');
       group.className = 'settings-group';
@@ -946,9 +1000,9 @@
       if (arguments.length > 8 && arguments[8] === true) {
         const btnDef = document.createElement('button');
         btnDef.className = 'settings-btn settings-btn-cancel';
-        btnDef.style.cssText = 'padding:4px 8px;font-size:11px;line-height:1;color:#a0aab4;';
-        btnDef.textContent = 'Default';
+        btnDef.innerHTML = '&#8634;';
         btnDef.title = 'Reset to ' + defaultVal;
+        btnDef.style.cssText = 'font-size:16px;padding:2px 4px;line-height:1;color:#a0aab4;cursor:pointer;';
         btnDef.addEventListener('click', () => update(defaultVal));
         row.appendChild(btnDef);
       }
@@ -966,6 +1020,10 @@
     addStepper(secLayout, 'Margin Top (px)', 'padTop', 24, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Margin Left (px)', 'padLeft', 28, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Card Width (px)', 'cardWidth', 480, 200, 1200, 20, undefined, true);
+
+    // Top gradient accent color
+    addColorField(secLayout, 'Accent Color', 'gradColor', '#D42F8A',
+      'Top border gradient is generated from this color.');
 
     // --- TITLE & HEADER ---
     const secTitle = addSection('Title & Header');
@@ -1182,6 +1240,11 @@
     const cw = parseInt(settings.cardWidth, 10);
     if (cw > 0) card.style.maxWidth = cw + 'px';
     try { card.classList.add(tableau.ClassNameKey.Worksheet); } catch (e) { /* ok */ }
+
+    // Custom top gradient from single accent color
+    const accentHex = settings.gradColor || '#D42F8A';
+    const gradStops = buildGradientFromColor(accentHex);
+    card.style.borderImage = `linear-gradient(135deg, ${gradStops.join(', ')}) 1`;
 
     // ---- Custom link (top-left) ----
     if (settings.showLink) {
@@ -1410,7 +1473,7 @@
   // =========================================================================
 
   function drawSparkline (container, sparkData, ptdSparkData, settings, chartHeight, valueFmt) {
-    const margin = { top: 28, right: 8, bottom: 24, left: 8 };
+    const margin = { top: 28, right: 8, bottom: settings.showSparkPeriods ? 24 : 8, left: 8 };
     const width = container.offsetWidth || 400;
     const totalWidth = width - margin.left - margin.right;
     const totalHeight = chartHeight || 130;
@@ -1584,6 +1647,122 @@
         .text(d => d.label);
     }
 
+    // ---- Hover interaction ----
+    // Vertical guide line
+    const guideLine = g.append('line')
+      .attr('class', 'spark-guide')
+      .attr('y1', -margin.top + 4)
+      .attr('y2', chartH + 4);
+
+    // Highlight circles (actual + ptd)
+    const hoverDot = g.append('circle')
+      .attr('r', 6)
+      .attr('fill', '#D42F8A')
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
+      .style('pointer-events', 'none')
+      .style('opacity', 0);
+
+    let hoverDotPtd = null;
+    if (ptdSparkData) {
+      hoverDotPtd = g.append('circle')
+        .attr('r', 5)
+        .attr('fill', '#7B2FBE')
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2)
+        .style('pointer-events', 'none')
+        .style('opacity', 0);
+    }
+
+    // Tooltip group
+    const tooltip = g.append('g')
+      .style('pointer-events', 'none')
+      .style('opacity', 0);
+
+    const tooltipBg = tooltip.append('rect').attr('class', 'spark-tooltip-bg');
+    const tooltipVal = tooltip.append('text').attr('class', 'spark-tooltip-val');
+    const tooltipLbl = tooltip.append('text').attr('class', 'spark-tooltip-lbl');
+    let tooltipPtd = null;
+    if (ptdSparkData) {
+      tooltipPtd = tooltip.append('text').attr('class', 'spark-tooltip-ptd');
+    }
+
+    // Invisible overlay for mouse events
+    g.append('rect')
+      .attr('width', totalWidth)
+      .attr('height', chartH)
+      .attr('fill', 'transparent')
+      .style('cursor', 'crosshair')
+      .on('mousemove', function (event) {
+        const [mx] = d3.pointer(event);
+        // Find nearest data point index
+        let minDist = Infinity, idx = 0;
+        sparkData.forEach((_, i) => {
+          const dist = Math.abs(x(i) - mx);
+          if (dist < minDist) { minDist = dist; idx = i; }
+        });
+
+        const px = x(idx);
+        const py = y(sparkData[idx].value);
+
+        // Guide line
+        guideLine.attr('x1', px).attr('x2', px).classed('visible', true);
+
+        // Highlight dot
+        hoverDot.attr('cx', px).attr('cy', py).style('opacity', 1);
+
+        // Ptd dot
+        if (hoverDotPtd && ptdSparkData && ptdSparkData[idx]) {
+          hoverDotPtd
+            .attr('cx', px)
+            .attr('cy', y(ptdSparkData[idx].value))
+            .style('opacity', 1);
+        }
+
+        // Build tooltip content
+        const valText = valueFmt(sparkData[idx].value);
+        const lblText = sparkData[idx].label || '';
+        tooltipVal.text(valText);
+        tooltipLbl.text(lblText);
+
+        let tooltipH = 42;
+        const lineSpacing = 16;
+        tooltipVal.attr('x', 10).attr('y', 18);
+        tooltipLbl.attr('x', 10).attr('y', 18 + lineSpacing);
+
+        if (tooltipPtd && ptdSparkData && ptdSparkData[idx]) {
+          const ptdText = (settings.ptdBadgeLabel || 'Comp') + ': ' + valueFmt(ptdSparkData[idx].value);
+          tooltipPtd.text(ptdText).attr('x', 10).attr('y', 18 + lineSpacing * 2);
+          tooltipH = 42 + lineSpacing;
+        }
+
+        // Measure text width for bg
+        const valBBox = tooltipVal.node().getBBox();
+        const lblBBox = tooltipLbl.node().getBBox();
+        let maxW = Math.max(valBBox.width, lblBBox.width);
+        if (tooltipPtd && ptdSparkData && ptdSparkData[idx]) {
+          const ptdBBox = tooltipPtd.node().getBBox();
+          maxW = Math.max(maxW, ptdBBox.width);
+        }
+        const tooltipW = maxW + 20;
+
+        tooltipBg.attr('width', tooltipW).attr('height', tooltipH);
+
+        // Position tooltip — flip if near right edge
+        let tx = px + 12;
+        if (tx + tooltipW > totalWidth) tx = px - tooltipW - 12;
+        let ty = py - tooltipH - 10;
+        if (ty < -margin.top) ty = py + 16;
+
+        tooltip.attr('transform', `translate(${tx},${ty})`).style('opacity', 1);
+      })
+      .on('mouseleave', function () {
+        guideLine.classed('visible', false);
+        hoverDot.style('opacity', 0);
+        if (hoverDotPtd) hoverDotPtd.style('opacity', 0);
+        tooltip.style('opacity', 0);
+      });
+
     container.appendChild(svg.node());
 
     // Legend (only when comparison line is shown and legend enabled)
@@ -1596,6 +1775,55 @@
         '<span class="spark-legend-item"><span class="spark-legend-line dashed"></span>' + escapeHtml(compLegend) + '</span>';
       container.appendChild(legend);
     }
+  }
+
+  // Build a 3-stop gradient from a single hex color by shifting hue
+  function buildGradientFromColor (hex) {
+    // hex → rgb
+    let r = parseInt(hex.slice(1, 3), 16) / 255;
+    let g = parseInt(hex.slice(3, 5), 16) / 255;
+    let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    // rgb → hsl
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (max === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+
+    // hsl → hex helper
+    function hslToHex (hh, ss, ll) {
+      hh = ((hh % 1) + 1) % 1; // wrap 0-1
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      let rr, gg, bb;
+      if (ss === 0) { rr = gg = bb = ll; }
+      else {
+        const q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
+        const p = 2 * ll - q;
+        rr = hue2rgb(p, q, hh + 1/3);
+        gg = hue2rgb(p, q, hh);
+        bb = hue2rgb(p, q, hh - 1/3);
+      }
+      const toHex = v => Math.round(v * 255).toString(16).padStart(2, '0');
+      return '#' + toHex(rr) + toHex(gg) + toHex(bb);
+    }
+
+    // Generate 3 stops: hue-40° (warmer, lighter), base, hue+40° (cooler, darker)
+    const c1 = hslToHex(h - 0.11, Math.min(1, s + 0.1), Math.min(0.65, l + 0.1));
+    const c2 = hslToHex(h, s, l);
+    const c3 = hslToHex(h + 0.11, Math.min(1, s + 0.05), Math.max(0.3, l - 0.08));
+    return [c1, c2, c3];
   }
 
   function escapeHtml (str) {
