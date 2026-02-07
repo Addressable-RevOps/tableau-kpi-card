@@ -1480,7 +1480,8 @@
 
       if (settings.showDelta && kpi.delta !== null) {
         const deltaEl = document.createElement('span');
-        const isNeutral = Math.abs(kpi.delta) < 0.005;
+        const displayDelta = Math.abs(kpi.delta).toFixed(deltaDecPlaces);
+        const isNeutral = parseFloat(displayDelta) === 0;
         const isUp = kpi.delta > 0;
         const sentiment = isNeutral ? 'neutral' : (isUp !== rev) ? 'positive' : 'negative';
         deltaEl.className = 'kpi-delta ' + sentiment;
@@ -1488,7 +1489,7 @@
         const arrow = isNeutral ? '–' : isUp ? '▲' : '▼';
         deltaEl.innerHTML =
           '<span class="kpi-delta-arrow">' + arrow + '</span> ' +
-          Math.abs(kpi.delta).toFixed(deltaDecPlaces) + '% ' + escapeHtml(settings.deltaLabel || 'vs prev');
+          displayDelta + '% ' + escapeHtml(settings.deltaLabel || 'vs prev');
         valueRow.appendChild(deltaEl);
       }
 
@@ -1499,7 +1500,8 @@
 
       if (settings.ptdEnabled && kpi.ptdDelta !== null && ptdLabelText !== '') {
         const ptdEl = document.createElement('span');
-        const ptdNeutral = Math.abs(kpi.ptdDelta) < 0.005;
+        const displayPtdDelta = Math.abs(kpi.ptdDelta).toFixed(deltaDecPlaces);
+        const ptdNeutral = parseFloat(displayPtdDelta) === 0;
         const ptdUp = kpi.ptdDelta > 0;
         const ptdSentiment = ptdNeutral ? 'neutral' : (ptdUp !== rev) ? 'positive' : 'negative';
         ptdEl.className = 'kpi-delta kpi-delta-ptd ' + ptdSentiment;
@@ -1507,7 +1509,7 @@
         const ptdArrow = ptdNeutral ? '–' : ptdUp ? '▲' : '▼';
         ptdEl.innerHTML =
           '<span class="kpi-delta-arrow">' + ptdArrow + '</span> ' +
-          Math.abs(kpi.ptdDelta).toFixed(deltaDecPlaces) + '% ' + escapeHtml(ptdLabelText);
+          displayPtdDelta + '% ' + escapeHtml(ptdLabelText);
         valueRow.appendChild(ptdEl);
       }
 
