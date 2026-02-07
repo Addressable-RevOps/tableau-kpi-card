@@ -1422,7 +1422,7 @@
         ? settings.goalLabel
         : 'Goal';
       if (kpi.goalPct !== null && goalLabelText !== '') {
-        card.appendChild(buildGoalBar(kpi.goalPct, kpi.formattedGoal, goalLabelText));
+        card.appendChild(buildGoalBar(kpi.goalPct, kpi.formattedGoal, goalLabelText, settings));
       }
     }
 
@@ -1432,7 +1432,7 @@
         ? settings.goal2Label
         : kpi.goal2Label;
       if (kpi.goal2Pct !== null && goal2LabelText !== '') {
-        card.appendChild(buildGoalBar(kpi.goal2Pct, kpi.formattedGoal2, goal2LabelText));
+        card.appendChild(buildGoalBar(kpi.goal2Pct, kpi.formattedGoal2, goal2LabelText, settings));
       }
     }
 
@@ -1461,7 +1461,7 @@
   // Goal bar builder — shared gradient for both bars
   // =========================================================================
 
-  function buildGoalBar (goalPct, formattedGoal, label) {
+  function buildGoalBar (goalPct, formattedGoal, label, settings) {
     const section = document.createElement('div');
     section.className = 'kpi-goal-section';
 
@@ -1473,8 +1473,19 @@
     const pct = Math.max(0, Math.min(goalPct, 100));
     fill.style.width = pct + '%';
 
-    // Unified brand gradient for all goal bars
-    fill.style.background = 'linear-gradient(90deg, var(--brand-orange), var(--brand-coral), var(--brand-magenta), var(--brand-purple))';
+    // Progress bar color
+    const barMode = (settings && settings.barColorMode) || 'default';
+    if (barMode === 'accent') {
+      const accent = (settings && settings.gradColor) || '#D42F8A';
+      const stops = buildGradientFromColor(accent);
+      fill.style.background = 'linear-gradient(90deg, ' + stops.join(', ') + ')';
+    } else if (barMode === 'custom') {
+      const custom = (settings && settings.barCustomColor) || '#3b82f6';
+      fill.style.background = custom;
+    } else {
+      // default: brand gradient
+      fill.style.background = 'linear-gradient(90deg, var(--brand-orange), var(--brand-coral), var(--brand-magenta), var(--brand-purple))';
+    }
 
     track.appendChild(fill);
     section.appendChild(track);
