@@ -434,6 +434,44 @@
     return null;
   }
 
+  // Infer previous period label (e.g., "2026 Q1" -> "2025 Q4")
+  function inferPreviousPeriodLabel (currentLabel) {
+    const s = String(currentLabel).trim();
+    // Quarter format: "2026 Q1" or "2026 Q1" or "2026-Q1"
+    const mQ = s.match(/^(\d{4})\s*Q(\d)$/i) || s.match(/^(\d{4})-Q(\d)$/i);
+    if (mQ) {
+      let year = +mQ[1];
+      let quarter = +mQ[2];
+      if (quarter === 1) {
+        year--;
+        quarter = 4;
+      } else {
+        quarter--;
+      }
+      return year + ' Q' + quarter;
+    }
+    // Year format: "2026"
+    const mY = s.match(/^(\d{4})$/);
+    if (mY) {
+      return String(+mY[1] - 1);
+    }
+    // Month format: "2026-01" or "January 2026"
+    const mM = s.match(/^(\d{4})-(\d{2})$/);
+    if (mM) {
+      let year = +mM[1];
+      let month = +mM[2];
+      if (month === 1) {
+        year--;
+        month = 12;
+      } else {
+        month--;
+      }
+      return year + '-' + String(month).padStart(2, '0');
+    }
+    // Fallback: just "Previous"
+    return 'Previous';
+  }
+
   // =========================================================================
   // KPI computation
   // =========================================================================
@@ -599,11 +637,22 @@
       ptdDelta = ((current.ptdValue - previous.ptdValue) / Math.abs(previous.ptdValue)) * 100;
     }
 
-    const sparkData = periods.map(p => ({ label: p.label, value: p.value }));
+    let sparkData = periods.map(p => ({ label: p.label, value: p.value }));
+
+    // If only one data point, prepend a dummy previous period with 0
+    if (sparkData.length === 1) {
+      const prevLabel = inferPreviousPeriodLabel(sparkData[0].label);
+      sparkData.unshift({ label: prevLabel, value: 0 });
+    }
 
     let ptdSparkData = null;
     if (periods.every(p => p.ptdValue !== null && p.ptdValue !== undefined)) {
       ptdSparkData = periods.map(p => ({ label: p.label, value: p.ptdValue }));
+      // If only one PTD data point, prepend dummy previous period
+      if (ptdSparkData.length === 1) {
+        const prevLabel = inferPreviousPeriodLabel(ptdSparkData[0].label);
+        ptdSparkData.unshift({ label: prevLabel, value: 0 });
+      }
     }
 
     const periodLabel = previous
