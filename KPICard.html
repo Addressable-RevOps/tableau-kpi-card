@@ -317,6 +317,45 @@
       opacity: 1;
     }
 
+    /* ---- Gauge layout ---- */
+    .kpi-gauge-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px 0 0;
+    }
+    .kpi-gauge-section svg {
+      display: block;
+      overflow: visible;
+    }
+    .kpi-gauge-value {
+      font-size: 42px;
+      font-weight: 700;
+      fill: var(--brand-dark);
+    }
+    .kpi-gauge-pct {
+      font-size: 15px;
+      font-weight: 600;
+      fill: #8e99a4;
+    }
+    .kpi-gauge-goal-label {
+      font-size: 12px;
+      fill: #a0aab4;
+    }
+    .kpi-gauge-goal2-label {
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--brand-purple);
+    }
+    .kpi-gauge-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
     /* ---- Empty state ---- */
     .kpi-empty {
       text-align: center;
@@ -572,10 +611,15 @@
   <script src="./tableau.extensions.1.latest.min.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script>
-    // Cache-bust: always load the latest JS during development
-    var s = document.createElement('script');
-    s.src = './KPICard.js?t=' + Date.now();
-    document.head.appendChild(s);
+    // Cache-bust: load all JS modules in correct dependency order
+    var t = Date.now();
+    ['kpi-utils.js','kpi-data.js','kpi-settings.js','kpi-sparkline.js','kpi-gauge.js','KPICard.js']
+      .forEach(function(f){
+        var s = document.createElement('script');
+        s.src = './' + f + '?t=' + t;
+        s.async = false;          // guarantees sequential execution
+        document.head.appendChild(s);
+      });
   </script>
 </head>
 <body>
