@@ -68,6 +68,9 @@
     // Progress bars
     barColorMode:  'kpi_barColorMode',   // 'default' | 'accent' | 'custom'
     barCustomColor:'kpi_barCustomColor',
+    // Sparkline colors
+    sparklineColorMode: 'kpi_sparklineColorMode', // 'default' | 'accent' | 'custom'
+    sparklineCustomColor: 'kpi_sparklineCustomColor',
     // Link
     linkUrl:       'kpi_linkUrl',
     linkLabel:     'kpi_linkLabel',
@@ -116,7 +119,7 @@
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
       'padTop', 'padLeft', 'cardWidth',
-      'gradColor', 'barColorMode', 'barCustomColor',
+      'gradColor', 'barColorMode', 'barCustomColor', 'sparklineColorMode', 'sparklineCustomColor',
       'linkUrl', 'linkLabel', 'linkIcon'
     ];
     for (const key of stringKeys) {
@@ -983,7 +986,7 @@
       parent.appendChild(group);
     }
 
-    function addDropdown (parent, labelText, key, options, hint) {
+    function addDropdown (parent, labelText, key, options, hint, allowNone) {
       const group = document.createElement('div');
       group.className = 'settings-group';
 
@@ -995,16 +998,27 @@
       select.dataset.key = key;
       select.addEventListener('change', onInput);
 
-      const emptyOpt = document.createElement('option');
-      emptyOpt.value = '';
-      emptyOpt.textContent = '(None)';
-      select.appendChild(emptyOpt);
+      const currentValue = settings[key];
 
-      for (const opt of options) {
+      // Field-selection dropdowns need a "(None)" option
+      if (allowNone) {
+        const emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = '(None)';
+        select.appendChild(emptyOpt);
+      }
+
+      for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
         const optEl = document.createElement('option');
         optEl.value = opt.value;
         optEl.textContent = opt.label;
-        if (settings[key] === opt.value) optEl.selected = true;
+        if (currentValue === opt.value) {
+          optEl.selected = true;
+        } else if (!allowNone && !currentValue && i === 0) {
+          // No "(None)" and no saved value: default to first option
+          optEl.selected = true;
+        }
         select.appendChild(optEl);
       }
 
@@ -1103,11 +1117,11 @@
     addDropdown(secLayout, 'Progress Bar Color', 'barColorMode',
       [
         { value: 'default', label: 'Default' },
-        { value: 'accent',  label: 'Match accent color' },
-        { value: 'custom',  label: 'Custom color' }
+        { value: 'accent',  label: 'Match accent' },
+        { value: 'custom',  label: 'Custom' }
       ], 'Color style for goal progress bars.');
     addColorField(secLayout, 'Bar Color', 'barCustomColor', '#3b82f6',
-      'Used when "Custom color" is selected.');
+      'Used when "Custom" is selected.');
     addToggle(secLayout, 'Open Animation', 'showAnimation', 'Short draw-in animation on load.');
 
     // --- TITLE & HEADER ---
@@ -1165,13 +1179,21 @@
     addToggle(secSpark, 'Show Period Labels', 'showSparkPeriods', 'Period names along x-axis.');
     addToggle(secSpark, 'Show Legend', 'showLegend', 'Legend below the sparkline chart.');
     addStepper(secSpark, 'Chart Height (px)', 'sparkHeight', 130, 60, 300, 10);
+    addDropdown(secSpark, 'Line & Dot Color', 'sparklineColorMode',
+      [
+        { value: 'default', label: 'Default' },
+        { value: 'accent',  label: 'Match accent' },
+        { value: 'custom',  label: 'Custom' }
+      ], 'Color for sparkline lines and dots (labels stay neutral).');
+    addColorField(secSpark, 'Custom Color', 'sparklineCustomColor', '#3b82f6',
+      'Used when "Custom" is selected.');
 
     // --- SECONDARY COMPARISON (collapsed by default) ---
     const secComp = addSection('Secondary Comparison');
     addToggle(secComp, 'Enable Comparison', 'ptdEnabled',
       'Adds a badge and a dashed line on the sparkline.');
     addDropdown(secComp, 'Comparison Field', 'ptdFieldName', measures,
-      'Select a calculated field to compare against (e.g. PTD, forecast).');
+      'Select a calculated field to compare against (e.g. PTD, forecast).', true);
     addField(secComp, 'Badge Label', 'ptdLabel', 'vs prev PTD',
       'Text shown on the comparison badge.', 'vs prev PTD');
     addField(secComp, 'Legend Label', 'ptdLegendLabel', 'PTD Pace',
@@ -1180,7 +1202,7 @@
     // --- DATA FIELDS ---
     const secData = addSection('Data Fields');
     addDropdown(secData, 'Date / Period Field', 'dateFieldName', allFields,
-      'Field to group by (quarters, months, etc).');
+      'Field to group by (quarters, months, etc).', true);
 
     // --- CUSTOM LINK ---
     const secLink = addSection('Custom Link');
@@ -1600,13 +1622,35 @@
       .attr('viewBox', [0, 0, width, totalHeight + margin.bottom])
       .style('overflow', 'visible');
 
+    // Color mode: default (brand colors), accent, or custom
+    const colorMode = (settings && settings.sparklineColorMode) || 'default';
+    const accentColor = (settings && settings.gradColor) || '#D42F8A';
+    const customColor = (settings && settings.sparklineCustomColor) || '#3b82f6';
+    
+    let lineColor, dotColor, ptdColor;
+    if (colorMode === 'accent') {
+      lineColor = accentColor;
+      dotColor = accentColor;
+      ptdColor = accentColor;
+    } else if (colorMode === 'custom') {
+      lineColor = customColor;
+      dotColor = customColor;
+      ptdColor = customColor;
+    } else {
+      // default: brand colors
+      lineColor = '#EF5A5E'; // brand-coral
+      dotColor = '#D42F8A';  // brand-magenta
+      ptdColor = '#7B2FBE';  // brand-purple
+    }
+    
     const defs = svg.append('defs');
     const grad = defs.append('linearGradient')
       .attr('id', 'sparkGradient')
       .attr('x1', '0%').attr('y1', '0%')
       .attr('x2', '0%').attr('y2', '100%');
-    grad.append('stop').attr('offset', '0%').attr('stop-color', '#EF5A5E').attr('stop-opacity', 0.15);
-    grad.append('stop').attr('offset', '100%').attr('stop-color', '#EF5A5E').attr('stop-opacity', 0.02);
+    // Area gradient: always subtle/neutral for readability
+    grad.append('stop').attr('offset', '0%').attr('stop-color', lineColor).attr('stop-opacity', 0.08);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', lineColor).attr('stop-opacity', 0.02);
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
@@ -1644,7 +1688,9 @@
       g.append('path')
         .datum(ptdSparkData)
         .attr('class', 'spark-line-ptd')
-        .attr('d', ptdLine);
+        .attr('d', ptdLine)
+        .attr('stroke', ptdColor)
+        .attr('opacity', 0.7);
 
       g.selectAll('.spark-dot-ptd')
         .data(ptdSparkData)
@@ -1652,7 +1698,9 @@
         .attr('class', 'spark-dot-ptd')
         .attr('cx', (_, i) => x(i))
         .attr('cy', d => y(d.value))
-        .attr('r', 2.5);
+        .attr('r', 2.5)
+        .attr('fill', ptdColor)
+        .attr('opacity', 0.7);
     }
 
     // --- Actual line ---
@@ -1664,7 +1712,8 @@
     g.append('path')
       .datum(sparkData)
       .attr('class', 'spark-line')
-      .attr('d', line);
+      .attr('d', line)
+      .attr('stroke', lineColor);
 
     g.selectAll('.spark-dot')
       .data(sparkData)
@@ -1672,23 +1721,24 @@
       .attr('class', 'spark-dot')
       .attr('cx', (_, i) => x(i))
       .attr('cy', d => y(d.value))
-      .attr('r', 3.5);
+      .attr('r', 3.5)
+      .attr('fill', dotColor);
 
     // ---- Smart data labels with collision avoidance ----
     if (settings.showSparkLabels) {
       // Collect all label candidates with their natural y positions
       const labels = [];
 
-      // Actual line labels (above the dot)
+      // Actual line labels (above the dot) - neutral color for readability
       sparkData.forEach((d, i) => {
         labels.push({
           x: x(i), naturalY: y(d.value) - 10,
           text: valueFmt(d.value),
-          fill: '#D42F8A', opacity: 1, fontSize: 11, series: 'actual'
+          fill: '#1a1a2e', opacity: 1, fontSize: 11, series: 'actual'
         });
       });
 
-      // Comparison line labels (below the dot)
+      // Comparison line labels (below the dot) - neutral color for readability
       if (ptdSparkData) {
         ptdSparkData.forEach((d, i) => {
           // Skip if value is very close to actual (would overlap)
@@ -1698,7 +1748,7 @@
           labels.push({
             x: x(i), naturalY: y(d.value) + 14,
             text: valueFmt(d.value),
-            fill: '#7B2FBE', opacity: 0.7, fontSize: 10, series: 'ptd'
+            fill: '#4a5568', opacity: 0.8, fontSize: 10, series: 'ptd'
           });
         });
       }
@@ -1772,7 +1822,7 @@
     // Highlight circles (actual + ptd)
     const hoverDot = g.append('circle')
       .attr('r', 6)
-      .attr('fill', '#D42F8A')
+      .attr('fill', dotColor)
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('pointer-events', 'none')
@@ -1782,7 +1832,7 @@
     if (ptdSparkData) {
       hoverDotPtd = g.append('circle')
         .attr('r', 5)
-        .attr('fill', '#7B2FBE')
+        .attr('fill', ptdColor)
         .attr('stroke', '#fff')
         .attr('stroke-width', 2)
         .style('pointer-events', 'none')
