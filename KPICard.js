@@ -71,6 +71,8 @@
     // Sparkline colors
     sparklineColorMode: 'kpi_sparklineColorMode', // 'default' | 'accent' | 'custom'
     sparklineCustomColor: 'kpi_sparklineCustomColor',
+    // Value size
+    valueSize:     'kpi_valueSize',
     // Link
     linkUrl:       'kpi_linkUrl',
     linkLabel:     'kpi_linkLabel',
@@ -120,6 +122,7 @@
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
       'padTop', 'padLeft', 'cardWidth',
       'gradColor', 'barColorMode', 'barCustomColor', 'sparklineColorMode', 'sparklineCustomColor',
+      'valueSize',
       'linkUrl', 'linkLabel', 'linkIcon'
     ];
     for (const key of stringKeys) {
@@ -1151,6 +1154,7 @@
     // --- VALUE & DELTA ---
     const secValue = addSection('Value & Delta');
     addToggle(secValue, 'Show Value', 'showValue', 'The big number.');
+    addStepper(secValue, 'Value Size (px)', 'valueSize', 40, 16, 72, 2, undefined, true);
     addToggle(secValue, 'Show Delta Badge', 'showDelta', 'Change vs previous period.');
     addField(secValue, 'Delta Label', 'deltaLabel', 'vs prev',
       'Text after the percentage.', 'vs prev');
@@ -1466,6 +1470,8 @@
         const valueEl = document.createElement('span');
         valueEl.className = 'kpi-value';
         valueEl.textContent = kpi.formattedValue;
+        const vs = parseInt(settings.valueSize, 10);
+        if (vs > 0 && vs !== 40) valueEl.style.fontSize = vs + 'px';
         valueRow.appendChild(valueEl);
       }
 
@@ -1543,8 +1549,6 @@
       sparkSection.className = 'kpi-sparkline-section';
       card.appendChild(sparkSection);
     }
-
-    // (Custom link is rendered at the top of the card — see above)
 
     // Append card to DOM first so sparkline can measure actual width
     content.appendChild(card);
