@@ -4,6 +4,15 @@
 (function () {
   const KPI_VERSION = '1.0.0';
 
+  // Module-level reference so settings callbacks always use the latest data
+  let _renderLatest = null;
+  // Module-level refetch + render (for reload button)
+  let _refetchAndRender = null;
+  // Skip animation on settings-triggered re-renders
+  let _skipAnimation = false;
+  // Track previous showAnimation state to detect toggle-on
+  let _prevShowAnimation = null;
+
   // =========================================================================
   // Bootstrap
   // =========================================================================
@@ -22,6 +31,7 @@
     showSparkPeriods: 'kpi_showSparkPeriods',
     showLegend:       'kpi_showLegend',
     showLink:         'kpi_showLink',
+    showAnimation:    'kpi_showAnimation',
     // Labels
     titleText:     'kpi_titleText',
     titleSize:     'kpi_titleSize',
@@ -77,6 +87,7 @@
     showSparkPeriods: true,
     showLegend: true,
     showLink: true,
+    showAnimation: true,
     showDateRange: true,
     reverseDelta: false,
     ptdEnabled: false,
@@ -126,7 +137,10 @@
       }
     }
     await s.saveAsync();
-    if (renderCb) renderCb();
+    if (renderCb) {
+      _skipAnimation = true;
+      renderCb();
+    }
   }
 
   window.onload = tableau.extensions.initializeAsync().then(() => {
@@ -136,15 +150,21 @@
     let cachedEncodings = {};
     const sheetName = worksheet.name;
 
+    // Central render with latest cached data — used by settings onSave, resize, etc.
+    const renderLatest = () => render(cachedResult, cachedEncodings, sheetName);
+    _renderLatest = renderLatest;
+
     const updateDataAndRender = async () => {
       [cachedResult, cachedEncodings] = await Promise.all([
         getSummaryDataTable(worksheet),
         getEncodingMap(worksheet)
       ]);
-      render(cachedResult, cachedEncodings, sheetName);
+      renderLatest();
     };
 
-    onresize = () => render(cachedResult, cachedEncodings, sheetName);
+    _refetchAndRender = updateDataAndRender;
+
+    onresize = () => { _skipAnimation = true; renderLatest(); };
 
     worksheet.addEventListener(
       tableau.TableauEventType.SummaryDataChanged,
@@ -1033,12 +1053,13 @@
     // Progress bar color mode
     addDropdown(secLayout, 'Progress Bar Color', 'barColorMode',
       [
-        { value: 'default', label: 'Brand gradient' },
+        { value: 'default', label: 'Default' },
         { value: 'accent',  label: 'Match accent color' },
         { value: 'custom',  label: 'Custom color' }
       ], 'Color style for goal progress bars.');
     addColorField(secLayout, 'Bar Color', 'barCustomColor', '#3b82f6',
       'Used when "Custom color" is selected.');
+    addToggle(secLayout, 'Open Animation', 'showAnimation', 'Short draw-in animation on load.');
 
     // --- TITLE & HEADER ---
     const secTitle = addSection('Title & Header');
@@ -1232,6 +1253,11 @@
     content.innerHTML = '';
 
     const settings = loadSettings();
+    // Animate on initial load, data change, or when toggle is switched on
+    const justToggledOn = _prevShowAnimation === false && settings.showAnimation === true;
+    settings._animate = settings.showAnimation && (!_skipAnimation || justToggledOn);
+    _prevShowAnimation = settings.showAnimation;
+    _skipAnimation = false;
 
     // Apply page-level layout (space between card and page edges)
     const padT = parseInt(settings.padTop, 10);
@@ -1312,12 +1338,13 @@
     if (showGear) {
       const topActions = document.createElement('div');
       topActions.className = 'kpi-top-actions';
+
       const gearBtn = document.createElement('button');
       gearBtn.className = 'kpi-settings-btn';
       gearBtn.title = 'Settings';
       gearBtn.innerHTML = '&#9881;';
       gearBtn.addEventListener('click', () => {
-        openSettingsPanel(kpi, dataResult, () => render(dataResult, encodings, sheetName), sheetName);
+        openSettingsPanel(kpi, dataResult, _renderLatest || (() => render(dataResult, encodings, sheetName)), sheetName);
       });
       topActions.appendChild(gearBtn);
       card.appendChild(topActions);
@@ -1471,7 +1498,14 @@
     const fill = document.createElement('div');
     fill.className = 'kpi-progress-fill';
     const pct = Math.max(0, Math.min(goalPct, 100));
-    fill.style.width = pct + '%';
+
+    if (settings && settings._animate) {
+      fill.style.width = '0%';
+      fill.classList.add('animate');
+      requestAnimationFrame(() => { fill.style.width = pct + '%'; });
+    } else {
+      fill.style.width = pct + '%';
+    }
 
     // Progress bar color
     const barMode = (settings && settings.barColorMode) || 'default';
@@ -1796,6 +1830,55 @@
       });
 
     container.appendChild(svg.node());
+
+    // ---- Open animation: draw lines + pop dots ----
+    if (settings._animate) {
+      const animDuration = 600; // ms
+
+      // Animate line paths (actual + ptd) via stroke-dasharray
+      svg.selectAll('.spark-line, .spark-line-ptd').each(function () {
+        const path = d3.select(this);
+        const len = this.getTotalLength();
+        path
+          .attr('stroke-dasharray', len)
+          .attr('stroke-dashoffset', len)
+          .transition()
+          .duration(animDuration)
+          .ease(d3.easeCubicOut)
+          .attr('stroke-dashoffset', 0)
+          .on('end', function () {
+            // Remove dasharray so hover/resize don't break
+            d3.select(this).attr('stroke-dasharray', null);
+          });
+      });
+
+      // Fade in area fill
+      svg.selectAll('.spark-area')
+        .style('opacity', 0)
+        .transition()
+        .delay(animDuration * 0.3)
+        .duration(animDuration * 0.7)
+        .style('opacity', 1);
+
+      // Pop in dots with staggered delay
+      svg.selectAll('.spark-dot, .spark-dot-ptd').each(function (d, i) {
+        d3.select(this)
+          .attr('r', 0)
+          .transition()
+          .delay(animDuration * 0.3 + i * 60)
+          .duration(300)
+          .ease(d3.easeBackOut.overshoot(1.5))
+          .attr('r', d3.select(this).classed('spark-dot-ptd') ? 2.5 : 3.5);
+      });
+
+      // Fade in data labels + period labels
+      svg.selectAll('text')
+        .style('opacity', 0)
+        .transition()
+        .delay(animDuration * 0.5)
+        .duration(300)
+        .style('opacity', null); // restore original opacity
+    }
 
     // Legend (only when comparison line is shown and legend enabled)
     if (ptdSparkData && settings.showLegend) {
