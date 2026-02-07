@@ -1369,8 +1369,8 @@
 
       if (settings.showDelta && kpi.delta !== null) {
         const deltaEl = document.createElement('span');
+        const isNeutral = Math.abs(kpi.delta) < 0.005;
         const isUp = kpi.delta > 0;
-        const isNeutral = kpi.delta === 0;
         const sentiment = isNeutral ? 'neutral' : (isUp !== rev) ? 'positive' : 'negative';
         deltaEl.className = 'kpi-delta ' + sentiment;
         if (badgeStyle) deltaEl.style.cssText = badgeStyle;
@@ -1388,8 +1388,8 @@
 
       if (settings.ptdEnabled && kpi.ptdDelta !== null && ptdLabelText !== '') {
         const ptdEl = document.createElement('span');
+        const ptdNeutral = Math.abs(kpi.ptdDelta) < 0.005;
         const ptdUp = kpi.ptdDelta > 0;
-        const ptdNeutral = kpi.ptdDelta === 0;
         const ptdSentiment = ptdNeutral ? 'neutral' : (ptdUp !== rev) ? 'positive' : 'negative';
         ptdEl.className = 'kpi-delta kpi-delta-ptd ' + ptdSentiment;
         if (badgeStyle) ptdEl.style.cssText = badgeStyle;
