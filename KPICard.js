@@ -55,6 +55,9 @@
     cardWidth:     'kpi_cardWidth',
     // Gradient
     gradColor:     'kpi_gradColor',
+    // Progress bars
+    barColorMode:  'kpi_barColorMode',   // 'default' | 'accent' | 'custom'
+    barCustomColor:'kpi_barCustomColor',
     // Link
     linkUrl:       'kpi_linkUrl',
     linkLabel:     'kpi_linkLabel',
@@ -102,7 +105,7 @@
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
       'padTop', 'padLeft', 'cardWidth',
-      'gradColor',
+      'gradColor', 'barColorMode', 'barCustomColor',
       'linkUrl', 'linkLabel', 'linkIcon'
     ];
     for (const key of stringKeys) {
@@ -1026,6 +1029,16 @@
     // Top gradient accent color
     addColorField(secLayout, 'Accent Color', 'gradColor', '#D42F8A',
       'Top border gradient is generated from this color.');
+
+    // Progress bar color mode
+    addDropdown(secLayout, 'Progress Bar Color', 'barColorMode',
+      [
+        { value: 'default', label: 'Brand gradient' },
+        { value: 'accent',  label: 'Match accent color' },
+        { value: 'custom',  label: 'Custom color' }
+      ], 'Color style for goal progress bars.');
+    addColorField(secLayout, 'Bar Color', 'barCustomColor', '#3b82f6',
+      'Used when "Custom color" is selected.');
 
     // --- TITLE & HEADER ---
     const secTitle = addSection('Title & Header');
