@@ -205,30 +205,51 @@
     }
 
     /* ---- Custom link ---- */
-    .kpi-link {
-      display: inline-flex;
+    /* Top-right gear wrapper */
+    .kpi-top-actions {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--brand-purple);
+      z-index: 5;
+    }
+    /* Link: top-left, icon-only or button with label */
+    .kpi-link {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: rgba(123, 47, 190, .06);
-      border: 1px solid rgba(123, 47, 190, .15);
-      transition: background .2s, border-color .2s;
-      align-self: flex-start;
+      transition: opacity .2s;
+      line-height: 1;
+      z-index: 4;
     }
-    .kpi-link:hover {
-      background: rgba(123, 47, 190, .12);
-      border-color: rgba(123, 47, 190, .3);
-    }
+    .kpi-link:hover { opacity: .7; }
     .kpi-link-icon {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       object-fit: contain;
       flex-shrink: 0;
+      display: block;
+    }
+    /* Button mode: when label text is present */
+    .kpi-link.has-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4a5568;
+      padding: 4px 10px;
+      border-radius: 7px;
+      background: rgba(0, 0, 0, .04);
+      border: 1px solid rgba(0, 0, 0, .10);
+    }
+    .kpi-link.has-label:hover {
+      background: rgba(0, 0, 0, .08);
+      border-color: rgba(0, 0, 0, .18);
+      opacity: 1;
     }
 
     /* ---- Empty state ---- */
@@ -243,9 +264,6 @@
 
     /* ---- Settings gear ---- */
     .kpi-settings-btn {
-      position: absolute;
-      top: 10px;
-      right: 12px;
       background: none;
       border: none;
       cursor: pointer;
@@ -254,7 +272,6 @@
       transition: color .2s, transform .2s;
       padding: 4px;
       line-height: 1;
-      z-index: 5;
     }
     .kpi-settings-btn:hover {
       color: var(--brand-purple);

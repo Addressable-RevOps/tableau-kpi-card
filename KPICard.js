@@ -1183,7 +1183,36 @@
     if (cw > 0) card.style.maxWidth = cw + 'px';
     try { card.classList.add(tableau.ClassNameKey.Worksheet); } catch (e) { /* ok */ }
 
-    // ---- Settings gear (authoring mode only) ----
+    // ---- Custom link (top-left) ----
+    if (settings.showLink) {
+      const linkUrl  = (settings.linkUrl  || '').trim();
+      const linkLabel = (settings.linkLabel || '').trim();
+      const linkIcon  = (settings.linkIcon  || '').trim();
+      if (linkUrl && (linkIcon || linkLabel)) {
+        const linkEl = document.createElement('a');
+        linkEl.className = 'kpi-link';
+        linkEl.href = linkUrl;
+        linkEl.target = '_blank';
+        linkEl.rel = 'noopener noreferrer';
+        if (linkLabel) linkEl.classList.add('has-label');
+        if (linkIcon) {
+          const iconEl = document.createElement('img');
+          iconEl.className = 'kpi-link-icon';
+          iconEl.src = linkIcon;
+          iconEl.alt = '';
+          iconEl.onerror = function () { this.style.display = 'none'; };
+          linkEl.appendChild(iconEl);
+        }
+        if (linkLabel) {
+          const labelSpan = document.createElement('span');
+          labelSpan.textContent = linkLabel;
+          linkEl.appendChild(labelSpan);
+        }
+        card.appendChild(linkEl);
+      }
+    }
+
+    // ---- Settings gear (top-right, authoring mode only) ----
     let showGear = false;
     try {
       const mode = tableau.extensions.environment.mode;
@@ -1197,6 +1226,8 @@
     } catch (_) { /* ok */ }
 
     if (showGear) {
+      const topActions = document.createElement('div');
+      topActions.className = 'kpi-top-actions';
       const gearBtn = document.createElement('button');
       gearBtn.className = 'kpi-settings-btn';
       gearBtn.title = 'Settings';
@@ -1204,7 +1235,8 @@
       gearBtn.addEventListener('click', () => {
         openSettingsPanel(kpi, dataResult, () => render(dataResult, encodings, sheetName), sheetName);
       });
-      card.appendChild(gearBtn);
+      topActions.appendChild(gearBtn);
+      card.appendChild(topActions);
     } else {
       closeSettingsPanel();
     }
@@ -1328,31 +1360,7 @@
       card.appendChild(sparkSection);
     }
 
-    // ---- Custom link ----
-    if (settings.showLink) {
-      const linkUrl = settings.linkUrl || '';
-      const linkLabel = settings.linkLabel || '';
-      const linkIcon = settings.linkIcon || '';
-      if (linkUrl && linkLabel) {
-        const linkEl = document.createElement('a');
-        linkEl.className = 'kpi-link';
-        linkEl.href = linkUrl;
-        linkEl.target = '_blank';
-        linkEl.rel = 'noopener noreferrer';
-        if (linkIcon) {
-          const iconEl = document.createElement('img');
-          iconEl.className = 'kpi-link-icon';
-          iconEl.src = linkIcon;
-          iconEl.alt = '';
-          iconEl.onerror = function () { this.style.display = 'none'; };
-          linkEl.appendChild(iconEl);
-        }
-        const labelSpan = document.createElement('span');
-        labelSpan.textContent = linkLabel;
-        linkEl.appendChild(labelSpan);
-        card.appendChild(linkEl);
-      }
-    }
+    // (Custom link is rendered at the top of the card — see above)
 
     // Append card to DOM first so sparkline can measure actual width
     content.appendChild(card);
