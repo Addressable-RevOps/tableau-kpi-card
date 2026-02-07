@@ -2,6 +2,8 @@
 /* global d3 */
 
 (function () {
+  const KPI_VERSION = '1.0.0';
+
   // =========================================================================
   // Bootstrap
   // =========================================================================
@@ -1195,6 +1197,12 @@
     panel.appendChild(actionsRow);
     panel.appendChild(pasteArea);
 
+    // Version label
+    const versionEl = document.createElement('div');
+    versionEl.style.cssText = 'text-align:center;font-size:10px;color:#c4c9d0;margin-top:10px;';
+    versionEl.textContent = 'KPI Card v' + KPI_VERSION;
+    panel.appendChild(versionEl);
+
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
@@ -1417,7 +1425,7 @@
 
     // ---- Sparkline placeholder (drawn after card is in the DOM) ----
     let sparkSection = null;
-    if (settings.showSparkline && kpi.sparkData && kpi.sparkData.length > 1) {
+    if (settings.showSparkline && kpi.sparkData && kpi.sparkData.length > 0) {
       sparkSection = document.createElement('div');
       sparkSection.className = 'kpi-sparkline-section';
       card.appendChild(sparkSection);
