@@ -35,7 +35,8 @@ window.KPI.utils = (function () {
     deltaLabel:    'kpi_deltaLabel',
     goalLabel:     'kpi_goalLabel',
     goal2Label:    'kpi_goal2Label',
-    showDateRange: 'kpi_showDateRange',
+    showDateRange:   'kpi_showDateRange',
+    subtitleAlign:   'kpi_subtitleAlign',
     // Comparison
     reverseDelta:  'kpi_reverseDelta',
     // Secondary comparison
@@ -119,7 +120,7 @@ window.KPI.utils = (function () {
     }
 
     var stringKeys = [
-      'titleText', 'titleSize',
+      'titleText', 'titleSize', 'subtitleAlign',
       'valueLabel', 'deltaLabel', 'goalLabel', 'goal2Label', 'ptdLabel',
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',

@@ -154,7 +154,7 @@
       }
     }
 
-    // ---- Settings gear (top-right, authoring mode only) ----
+    // ---- Settings gear (top-right, authoring mode only, worksheet only) ----
     var showGear = false;
     try {
       var mode = tableau.extensions.environment.mode;
@@ -207,7 +207,12 @@
       if (valueLabelText !== '') {
         var header = document.createElement('div');
         header.className = 'kpi-header';
-        if (isGaugeHeader) header.style.justifyContent = 'center';
+        if (isGaugeHeader) {
+          header.style.justifyContent = 'center';
+        } else if (!showPeriod) {
+          var align = (settings.subtitleAlign || 'right');
+          header.style.justifyContent = align === 'left' ? 'flex-start' : align === 'center' ? 'center' : 'flex-end';
+        }
         header.innerHTML =
           '<span class="kpi-label">' + escapeHtml(valueLabelText) + '</span>' +
           (showPeriod

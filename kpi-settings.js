@@ -9,10 +9,12 @@ window.KPI = window.KPI || {};
 window.KPI.settingsPanel = (function () {
 
   var utils = window.KPI.utils;
-  var loadSettings  = utils.loadSettings;
-  var saveSettings  = utils.saveSettings;
   var SETTINGS_KEYS = utils.SETTINGS_KEYS;
   var KPI_VERSION   = utils.KPI_VERSION;
+
+  // These require Tableau — only called from the inline panel or the parent window.
+  var loadSettings  = utils.loadSettings;
+  var saveSettings  = utils.saveSettings;
 
   var _settingsOverlay = null;
 
@@ -23,59 +25,63 @@ window.KPI.settingsPanel = (function () {
     }
   }
 
-  function openSettingsPanel (kpi, dataResult, onSave, sheetName) {
-    if (_settingsOverlay) { closeSettingsPanel(); return; }
+  // =====================================================================
+  // Toast notification
+  // =====================================================================
 
-    var settings = loadSettings();
+  function showToast (msg) {
+    var toast = document.createElement('div');
+    toast.className = 'settings-toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 2000);
+  }
+
+  // =====================================================================
+  // Shared form builder (used by inline panel)
+  // =====================================================================
+
+  /**
+   * Builds the full settings form inside `panel`.
+   *
+   * @param {HTMLElement} panel - container to append form elements to
+   * @param {object} settings - current settings values
+   * @param {object} opts
+   *   onInput(values)       — called (debounced) when any field changes
+   *   onClose()             — called when close button is clicked
+   *   onApplyPaste(parsed)  — called when pasted settings are applied
+   *   kpiLabel              — default value label (from kpi.label)
+   *   goal2Label            — default goal2 label
+   *   sheetName             — worksheet name for defaults
+   *   allFields             — array of { value, label } for field dropdowns
+   *   measures              — array of { value, label } for measure dropdowns
+   *
+   * @returns {{ collectValues: function }}
+   */
+  function buildSettingsForm (panel, settings, opts) {
+
     var _debounceTimer = null;
 
-    // Available fields for dropdowns
-    var allFields = (dataResult && dataResult.columns)
-      ? dataResult.columns.map(function (c) { return { value: c.fieldName, label: c.fieldName }; })
-      : [];
-    var measures = (dataResult && dataResult.columns)
-      ? dataResult.columns
-          .filter(function (c) { return c.dataType === 'float' || c.dataType === 'int'; })
-          .map(function (c) { return { value: c.fieldName, label: c.fieldName }; })
-      : [];
+    // Helper: collect current values from all form inputs
+    function collectValues () {
+      var inputs = panel.querySelectorAll('input[data-key], select[data-key]');
+      var newSettings = {};
+      inputs.forEach(function (inp) {
+        if (inp.type === 'checkbox') {
+          newSettings[inp.dataset.key] = inp.checked;
+        } else if (inp.dataset.numVal !== undefined) {
+          newSettings[inp.dataset.key] = inp.dataset.numVal;
+        } else {
+          newSettings[inp.dataset.key] = inp.value;
+        }
+      });
+      return newSettings;
+    }
 
-    // Container
-    var overlay = document.createElement('div');
-    overlay.className = 'settings-overlay';
-    _settingsOverlay = overlay;
-
-    var panel = document.createElement('div');
-    panel.className = 'settings-panel';
-
-    // Title row
-    var titleRow = document.createElement('div');
-    titleRow.className = 'settings-title';
-    titleRow.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg> <span style="flex:1">Settings</span>';
-
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'settings-btn settings-btn-cancel';
-    closeBtn.style.cssText = 'padding:4px 10px;font-size:16px;line-height:1;';
-    closeBtn.textContent = '\u00D7';
-    closeBtn.addEventListener('click', closeSettingsPanel);
-    titleRow.appendChild(closeBtn);
-    panel.appendChild(titleRow);
-
-    // Live-update helper
     function onInput () {
       clearTimeout(_debounceTimer);
-      _debounceTimer = setTimeout(async function () {
-        var inputs = panel.querySelectorAll('input[data-key], select[data-key]');
-        var newSettings = {};
-        inputs.forEach(function (inp) {
-          if (inp.type === 'checkbox') {
-            newSettings[inp.dataset.key] = inp.checked;
-          } else if (inp.dataset.numVal !== undefined) {
-            newSettings[inp.dataset.key] = inp.dataset.numVal;
-          } else {
-            newSettings[inp.dataset.key] = inp.value;
-          }
-        });
-        await saveSettings(newSettings, onSave);
+      _debounceTimer = setTimeout(function () {
+        opts.onInput(collectValues());
       }, 300);
     }
 
@@ -332,6 +338,12 @@ window.KPI.settingsPanel = (function () {
     // Build sections by component
     // ===================================================================
 
+    var kpiLabel   = opts.kpiLabel   || '';
+    var goal2Label = opts.goal2Label || 'Secondary Goal';
+    var sheetName  = opts.sheetName  || '';
+    var allFields  = opts.allFields  || [];
+    var measures   = opts.measures   || [];
+
     // --- LAYOUT ---
     var secLayout = addSection('Layout');
     addDropdown(secLayout, 'Card Layout', 'cardLayout',
@@ -361,11 +373,16 @@ window.KPI.settingsPanel = (function () {
     addToggle(secTitle, 'Show Title', 'showTitle', 'The sheet name displayed at the top.');
     addField(secTitle, 'Title Text', 'titleText',
       sheetName || 'Sheet name', 'Blank = use sheet name.', '');
-    addStepper(secTitle, 'Title Size (px)', 'titleSize', 18, 10, 36, 1, undefined, true);
+    addStepper(secTitle, 'Title Size (px)', 'titleSize', 18, 10, 72, 1, undefined, true);
     addToggle(secTitle, 'Show Subtitle / Label', 'showHeader', 'Value label and date range row.');
+    addDropdown(secTitle, 'Subtitle Alignment', 'subtitleAlign',
+      [
+        { value: 'left',   label: 'Left' },
+        { value: 'center', label: 'Center' },
+        { value: 'right',  label: 'Right' }
+      ], 'When not using date field, align subtitle under the title. (Standard layout only.)');
     addField(secTitle, 'Value Label Override', 'valueLabel',
-      kpi ? kpi.label : 'Auto-detected', 'Blank = hide label.',
-      kpi ? kpi.label : '');
+      kpiLabel || 'Auto-detected', 'Blank = hide label.', kpiLabel || '');
     addToggle(secTitle, 'Show Date Range', 'showDateRange', 'Period range in the subtitle.');
 
     // --- NUMBER FORMAT ---
@@ -395,8 +412,7 @@ window.KPI.settingsPanel = (function () {
     var secGoal2 = addSection('Secondary Goal');
     addToggle(secGoal2, 'Show Secondary Goal', 'showGoal2');
     addField(secGoal2, 'Goal Label', 'goal2Label',
-      kpi ? kpi.goal2Label : 'Secondary Goal', 'Blank = hide bar.',
-      kpi ? kpi.goal2Label : 'Secondary Goal');
+      goal2Label || 'Secondary Goal', 'Blank = hide bar.', goal2Label || 'Secondary Goal');
 
     // --- SPARKLINE ---
     var secSpark = addSection('Sparkline Chart');
@@ -437,23 +453,18 @@ window.KPI.settingsPanel = (function () {
     addField(secLink, 'Link URL', 'linkUrl', 'https://...');
     addField(secLink, 'Icon URL', 'linkIcon', 'https://...', 'Optional 16x16 icon.');
 
-    // --- COPY / PASTE ---
+    // ===================================================================
+    // Copy / Paste settings
+    // ===================================================================
+
     var actionsRow = document.createElement('div');
     actionsRow.className = 'settings-actions';
-
-    function showToast (msg) {
-      var toast = document.createElement('div');
-      toast.className = 'settings-toast';
-      toast.textContent = msg;
-      document.body.appendChild(toast);
-      setTimeout(function () { toast.remove(); }, 2000);
-    }
 
     var copyBtn = document.createElement('button');
     copyBtn.className = 'settings-btn settings-btn-cancel';
     copyBtn.textContent = 'Copy Settings';
     copyBtn.addEventListener('click', async function () {
-      var currentSettings = loadSettings();
+      var currentSettings = collectValues();
       try {
         await navigator.clipboard.writeText(JSON.stringify(currentSettings, null, 2));
         showToast('Settings copied to clipboard');
@@ -484,7 +495,7 @@ window.KPI.settingsPanel = (function () {
     applyBtn.className = 'settings-btn settings-btn-primary';
     applyBtn.style.cssText = 'margin-top:6px;width:100%;';
     applyBtn.textContent = 'Apply';
-    applyBtn.addEventListener('click', async function () {
+    applyBtn.addEventListener('click', function () {
       var text = pasteTA.value.trim();
       if (!text) { showToast('Paste your settings JSON first'); return; }
       var parsed;
@@ -496,9 +507,9 @@ window.KPI.settingsPanel = (function () {
       var knownKeys = new Set(Object.keys(SETTINGS_KEYS));
       var validKeys = Object.keys(parsed).filter(function (k) { return knownKeys.has(k); });
       if (validKeys.length === 0) { showToast('No recognized settings found'); return; }
-      await saveSettings(parsed, onSave);
-      closeSettingsPanel();
-      openSettingsPanel(kpi, dataResult, onSave, sheetName);
+      if (opts.onApplyPaste) {
+        opts.onApplyPaste(parsed);
+      }
       showToast('Settings applied (' + validKeys.length + ' values)');
     });
 
@@ -516,11 +527,80 @@ window.KPI.settingsPanel = (function () {
     panel.appendChild(actionsRow);
     panel.appendChild(pasteArea);
 
+    // Bottom close button
+    var closeBtnBottom = document.createElement('button');
+    closeBtnBottom.className = 'settings-btn settings-btn-cancel';
+    closeBtnBottom.style.cssText = 'margin-top:12px;width:100%;padding:8px 0;font-size:13px;font-weight:600;';
+    closeBtnBottom.textContent = 'Close';
+    closeBtnBottom.addEventListener('click', opts.onClose);
+    panel.appendChild(closeBtnBottom);
+
     // Version label
     var versionEl = document.createElement('div');
     versionEl.style.cssText = 'text-align:center;font-size:10px;color:#c4c9d0;margin-top:10px;';
     versionEl.textContent = 'KPI Card v' + KPI_VERSION;
     panel.appendChild(versionEl);
+
+    return { collectValues: collectValues };
+  }
+
+  // =====================================================================
+  // Inline side panel (for worksheet view)
+  // =====================================================================
+
+  function openSettingsPanel (kpi, dataResult, onSave, sheetName) {
+    if (_settingsOverlay) { closeSettingsPanel(); return; }
+
+    var settings = loadSettings();
+
+    // Available fields for dropdowns
+    var allFields = (dataResult && dataResult.columns)
+      ? dataResult.columns.map(function (c) { return { value: c.fieldName, label: c.fieldName }; })
+      : [];
+    var measures = (dataResult && dataResult.columns)
+      ? dataResult.columns
+          .filter(function (c) { return c.dataType === 'float' || c.dataType === 'int'; })
+          .map(function (c) { return { value: c.fieldName, label: c.fieldName }; })
+      : [];
+
+    // Container
+    var overlay = document.createElement('div');
+    overlay.className = 'settings-overlay';
+    _settingsOverlay = overlay;
+
+    var panel = document.createElement('div');
+    panel.className = 'settings-panel';
+
+    // Title row
+    var titleRow = document.createElement('div');
+    titleRow.className = 'settings-title';
+    titleRow.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg> <span style="flex:1">Settings</span>';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'settings-btn settings-btn-cancel';
+    closeBtn.style.cssText = 'padding:4px 10px;font-size:16px;line-height:1;';
+    closeBtn.textContent = '\u00D7';
+    closeBtn.addEventListener('click', closeSettingsPanel);
+    titleRow.appendChild(closeBtn);
+    panel.appendChild(titleRow);
+
+    // Build form
+    buildSettingsForm(panel, settings, {
+      onInput: function (values) {
+        saveSettings(values, onSave);
+      },
+      onClose: closeSettingsPanel,
+      onApplyPaste: function (parsed) {
+        saveSettings(parsed, onSave);
+        closeSettingsPanel();
+        openSettingsPanel(kpi, dataResult, onSave, sheetName);
+      },
+      kpiLabel:   kpi ? kpi.label : '',
+      goal2Label: kpi ? kpi.goal2Label : 'Secondary Goal',
+      sheetName:  sheetName,
+      allFields:  allFields,
+      measures:   measures
+    });
 
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
