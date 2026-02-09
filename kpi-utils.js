@@ -56,6 +56,8 @@ window.KPI.utils = (function () {
     fmtAbbreviate: 'kpi_fmtAbbreviate',
     fmtDeltaDecimals:'kpi_fmtDeltaDecimals',
     // Layout
+    fillWorksheet: 'kpi_fillWorksheet',
+    compactMode:   'kpi_compactMode',
     padTop:        'kpi_padTop',
     padLeft:       'kpi_padLeft',
     cardWidth:     'kpi_cardWidth',
@@ -91,6 +93,8 @@ window.KPI.utils = (function () {
     showLink: true,
     showAnimation: true,
     showDateRange: true,
+    fillWorksheet: false,
+    compactMode: false,
     reverseDelta: false,
     ptdEnabled: false,
     fmtAbbreviate: false

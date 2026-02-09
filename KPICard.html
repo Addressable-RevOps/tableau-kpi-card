@@ -50,6 +50,20 @@
       position: relative;
     }
 
+    /* ---- Compact mode (Fill Worksheet) ---- */
+    .kpi-card--compact {
+      padding: 14px 18px 12px;
+      gap: 8px;
+    }
+    .kpi-card--compact .kpi-title { margin-top: 2px; }
+    .kpi-card--compact .kpi-header { margin-bottom: -2px; }
+    .kpi-card--compact .kpi-value-row { gap: 10px; }
+    .kpi-card--compact .kpi-goal-section,
+    .kpi-card--compact .kpi-goal2-section { gap: 4px; }
+    .kpi-card--compact .kpi-sparkline-section { padding-top: 2px; }
+    .kpi-card--compact .kpi-gauge-section { padding: 2px 0 0; }
+    .kpi-card--compact .kpi-gauge-badges { margin-top: 0; }
+
     /* ---- Card title (from sheet name) ---- */
     .kpi-title {
       font-size: 18px;
@@ -340,7 +354,8 @@
     }
     .kpi-gauge-goal-label {
       font-size: 12px;
-      fill: #a0aab4;
+      font-weight: 600;
+      fill: var(--brand-purple);
     }
     .kpi-gauge-goal2-label {
       font-size: 11px;

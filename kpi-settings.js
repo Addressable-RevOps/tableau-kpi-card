@@ -339,6 +339,8 @@ window.KPI.settingsPanel = (function () {
         { value: 'standard', label: 'Standard' },
         { value: 'gauge',    label: 'Gauge' }
       ], 'Standard = list view with sparkline. Gauge = semi-circle goal dial.');
+    addToggle(secLayout, 'Fill Worksheet', 'fillWorksheet', 'Scale the card to fill the entire view.');
+    addToggle(secLayout, 'Compact Mode', 'compactMode', 'Reduce internal spacing for a tighter layout.');
     addStepper(secLayout, 'Margin Top (px)', 'padTop', 24, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Margin Left (px)', 'padLeft', 28, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Card Width (px)', 'cardWidth', 480, 200, 1200, 20, undefined, true);

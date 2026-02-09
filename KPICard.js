@@ -94,6 +94,9 @@
     var left = padL >= 0 ? padL : 28;
     content.style.padding = top + 'px ' + left + 'px';
 
+    // Fill worksheet mode
+    var isFill = !!settings.fillWorksheet;
+
     var r = resolveEncodings(encodings, dataResult.columns, settings);
 
     if (!r.valueCol) {
@@ -112,6 +115,7 @@
 
     var card = document.createElement('div');
     card.className = 'kpi-card';
+    if (settings.compactMode) card.classList.add('kpi-card--compact');
     var cw = parseInt(settings.cardWidth, 10);
     if (cw > 0) card.style.maxWidth = cw + 'px';
     try { card.classList.add(tableau.ClassNameKey.Worksheet); } catch (e) { /* ok */ }
@@ -374,6 +378,21 @@
         var ptdData = settings.ptdEnabled ? kpi.ptdSparkData : null;
         var height = parseInt(settings.sparkHeight, 10) || 130;
         drawSparkline(sparkSection, kpi.sparkData, ptdData, settings, height, kpi.globalFmt || formatNumberCompact);
+      }
+    }
+
+    // ---- Fill worksheet: zoom card to fit available space ----
+    if (isFill) {
+      var availW = content.clientWidth - left * 2;  // account for padding both sides
+      var availH = content.clientHeight - top * 2;
+      var cardW  = card.offsetWidth;
+      var cardH  = card.offsetHeight;
+      if (cardW > 0 && cardH > 0) {
+        var zoomFactor = Math.min(availW / cardW, availH / cardH, 3); // cap at 3x
+        if (zoomFactor !== 1) {
+          card.style.zoom = zoomFactor;
+          card.style.transformOrigin = 'top left';
+        }
       }
     }
   }
