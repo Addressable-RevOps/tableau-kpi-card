@@ -60,6 +60,8 @@ window.KPI.utils = (function () {
     fillWorksheet: 'kpi_fillWorksheet',
     compactMode:   'kpi_compactMode',
     padTop:        'kpi_padTop',
+    padRight:      'kpi_padRight',
+    padBottom:     'kpi_padBottom',
     padLeft:       'kpi_padLeft',
     cardWidth:     'kpi_cardWidth',
     // Gradient
@@ -124,7 +126,7 @@ window.KPI.utils = (function () {
       'valueLabel', 'deltaLabel', 'goalLabel', 'goal2Label', 'ptdLabel',
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
-      'padTop', 'padLeft', 'cardWidth',
+      'padTop', 'padRight', 'padBottom', 'padLeft', 'cardWidth',
       'gradColor', 'barColorMode', 'barCustomColor', 'sparklineColorMode', 'sparklineCustomColor',
       'cardLayout', 'valueSize',
       'linkUrl', 'linkLabel', 'linkIcon'

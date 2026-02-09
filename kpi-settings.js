@@ -354,6 +354,8 @@ window.KPI.settingsPanel = (function () {
     addToggle(secLayout, 'Fill Worksheet', 'fillWorksheet', 'Scale the card to fill the entire view.');
     addToggle(secLayout, 'Compact Mode', 'compactMode', 'Reduce internal spacing for a tighter layout.');
     addStepper(secLayout, 'Margin Top (px)', 'padTop', 24, 0, 80, 2, undefined, true);
+    addStepper(secLayout, 'Margin Right (px)', 'padRight', 28, 0, 80, 2, undefined, true);
+    addStepper(secLayout, 'Margin Bottom (px)', 'padBottom', 24, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Margin Left (px)', 'padLeft', 28, 0, 80, 2, undefined, true);
     addStepper(secLayout, 'Card Width (px)', 'cardWidth', 480, 200, 1200, 20, undefined, true);
     addColorField(secLayout, 'Accent Color', 'gradColor', '#D42F8A',
@@ -380,7 +382,7 @@ window.KPI.settingsPanel = (function () {
         { value: 'left',   label: 'Left' },
         { value: 'center', label: 'Center' },
         { value: 'right',  label: 'Right' }
-      ], 'When not using date field, align subtitle under the title. (Standard layout only.)');
+      ], 'When not using date field, align subtitle under the title.');
     addField(secTitle, 'Value Label Override', 'valueLabel',
       kpiLabel || 'Auto-detected', 'Blank = hide label.', kpiLabel || '');
     addToggle(secTitle, 'Show Date Range', 'showDateRange', 'Period range in the subtitle.');

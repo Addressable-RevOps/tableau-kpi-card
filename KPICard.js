@@ -89,10 +89,14 @@
 
     // Apply page-level layout
     var padT = parseInt(settings.padTop, 10);
+    var padR = parseInt(settings.padRight, 10);
+    var padB = parseInt(settings.padBottom, 10);
     var padL = parseInt(settings.padLeft, 10);
     var top = padT >= 0 ? padT : 24;
+    var right = padR >= 0 ? padR : 28;
+    var bottom = padB >= 0 ? padB : 24;
     var left = padL >= 0 ? padL : 28;
-    content.style.padding = top + 'px ' + left + 'px';
+    content.style.padding = top + 'px ' + right + 'px ' + bottom + 'px ' + left + 'px';
 
     // Fill worksheet mode
     var isFill = !!settings.fillWorksheet;
@@ -388,8 +392,8 @@
 
     // ---- Fill worksheet: zoom card to fit available space ----
     if (isFill) {
-      var availW = content.clientWidth - left * 2;  // account for padding both sides
-      var availH = content.clientHeight - top * 2;
+      var availW = content.clientWidth - left - right;
+      var availH = content.clientHeight - top - bottom;
       var cardW  = card.offsetWidth;
       var cardH  = card.offsetHeight;
       if (cardW > 0 && cardH > 0) {

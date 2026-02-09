@@ -19,6 +19,19 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* No scrollbars anywhere */
+    html, body {
+      overflow: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: transparent;
@@ -28,6 +41,7 @@
     #content {
       width: 100%;
       height: 100vh;
+      overflow: hidden;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
