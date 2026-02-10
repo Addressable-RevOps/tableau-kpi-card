@@ -80,10 +80,16 @@
 
     var settings = loadSettings();
 
-    // Animate on initial load, data change, or when toggle is switched on
+    // Animation: in edit mode only when user toggles "Open Animation" on to preview; in published use saved setting
     var justToggledOn = _prevShowAnimation === false && settings.showAnimation === true;
     var skipAnim = utils.getSkipAnimation();
-    settings._animate = settings.showAnimation && (!skipAnim || justToggledOn);
+    var isAuthoring = false;
+    try { if (tableau.extensions.environment.mode === 'authoring') isAuthoring = true; } catch (_) { /* ok */ }
+    if (isAuthoring) {
+      settings._animate = justToggledOn; // edit mode: only animate when they turn the toggle on to preview
+    } else {
+      settings._animate = settings.showAnimation && (!skipAnim || justToggledOn); // published: normal
+    }
     _prevShowAnimation = settings.showAnimation;
     utils.setSkipAnimation(false);
 
