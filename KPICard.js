@@ -203,8 +203,8 @@
         ? (settings.showGoal2 && kpi.goal2Pct != null)
         : (settings.showGoal && kpi.goalPct != null);
       if (showPace && pacePct != null) {
-        var paceState = pacePct >= 90 ? 'on-track' : (pacePct > 80 ? 'at-risk' : 'off-track');
-        var paceCopy = paceState === 'on-track' ? 'On Track' : (paceState === 'at-risk' ? 'At Risk' : 'Off Track');
+        var paceState = pacePct >= 90 ? 'on-track' : (pacePct >= 80 ? 'at-risk' : 'off-track');
+        var paceCopy = paceState === 'on-track' ? 'ON TRACK' : (paceState === 'at-risk' ? 'AT RISK' : 'OFF TRACK');
         paceBanner = document.createElement('span');
         paceBanner.className = 'kpi-pace-banner kpi-pace-' + paceState;
         paceBanner.textContent = paceCopy;
