@@ -19,13 +19,14 @@ A configurable KPI card for Tableau that displays a value, delta badges, goal pr
 | File | Purpose |
 |------|---------|
 | `KPICard.trex` | Tableau extension manifest |
-| `KPICard.html` | HTML + CSS for the card |
+| `KPICard.html` | HTML for the card |
+| `KPICard.css` | Styles for the card |
 | `KPICard.js` | All logic: data, rendering, settings |
 | `tableau.extensions.1.latest.min.js` | Tableau Extensions API (bundled) |
 
 ## Setup
 
-1. Host `KPICard.html`, `KPICard.js`, and `tableau.extensions.1.latest.min.js` on any HTTPS server.
+1. Host `KPICard.html`, `KPICard.css`, `KPICard.js`, and `tableau.extensions.1.latest.min.js` on any HTTPS server.
 2. Update the `<url>` in `KPICard.trex` to your hosted URL.
 3. In Tableau Desktop, use a **Viz Extension** mark type and load the `.trex` file.
 4. Drag measures onto the **Value**, **Goal**, **Date**, and **Secondary Goal** encoding tiles.
