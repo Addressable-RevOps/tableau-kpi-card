@@ -194,15 +194,36 @@
       closeSettingsPanel();
     }
 
-    // ---- Title ----
+    // ---- Pace (optional pill on title line; only when showPaceIndicator is on) ----
+    var paceBanner = null;
+    if (settings.showPaceIndicator) {
+      var paceGoal = settings.paceGoal || 'primary';
+      var pacePct = (paceGoal === 'secondary') ? kpi.goal2Pct : kpi.goalPct;
+      var showPace = (paceGoal === 'secondary')
+        ? (settings.showGoal2 && kpi.goal2Pct != null)
+        : (settings.showGoal && kpi.goalPct != null);
+      if (showPace && pacePct != null) {
+        var paceState = pacePct >= 80 ? 'on-pace' : (pacePct >= 60 ? 'at-risk' : 'off-pace');
+        var paceCopy = paceState === 'on-pace' ? 'ON PACE' : (paceState === 'at-risk' ? 'AT RISK' : 'OFF PACE');
+        paceBanner = document.createElement('span');
+        paceBanner.className = 'kpi-pace-banner kpi-pace-' + paceState;
+        paceBanner.textContent = paceCopy;
+      }
+    }
+
+    // ---- Title (one wrapper; pill optional on same line; title always right) ----
     if (settings.showTitle) {
+      var titleRow = document.createElement('div');
+      titleRow.className = 'kpi-title-row';
       var title = document.createElement('div');
       title.className = 'kpi-title';
       title.textContent = settings.titleText || sheetName || kpi.label;
       var ts = parseInt(settings.titleSize, 10);
       if (ts > 0 && ts !== 18) title.style.fontSize = ts + 'px';
       if (settings.cardLayout === 'gauge') title.style.textAlign = 'center';
-      card.appendChild(title);
+      if (paceBanner) titleRow.appendChild(paceBanner);
+      titleRow.appendChild(title);
+      card.appendChild(titleRow);
     }
 
     // ---- Header (label + period) ----

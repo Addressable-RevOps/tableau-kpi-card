@@ -409,6 +409,12 @@ window.KPI.settingsPanel = (function () {
     var secGoal = addSection('Primary Goal');
     addToggle(secGoal, 'Show Primary Goal', 'showGoal');
     addField(secGoal, 'Goal Label', 'goalLabel', 'Goal', 'Blank = hide bar.', 'Goal');
+    addDropdown(secGoal, 'Pace based on', 'paceGoal',
+      [
+        { value: 'primary',   label: 'Primary goal' },
+        { value: 'secondary', label: 'Secondary goal' }
+      ], 'Which goal drives the on-pace pill (when enabled).');
+    addToggle(secGoal, 'Show pace indicator', 'showPaceIndicator', 'Show ON PACE / AT RISK / OFF PACE pill next to the title (off by default).');
 
     // --- SECONDARY GOAL ---
     var secGoal2 = addSection('Secondary Goal');
