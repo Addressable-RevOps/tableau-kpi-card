@@ -69,7 +69,8 @@
       padding: 14px 18px 12px;
       gap: 8px;
     }
-    .kpi-card--compact .kpi-title { margin-top: 2px; }
+    .kpi-card--compact .kpi-title-row { margin-top: 2px; }
+    .kpi-card--compact .kpi-title { margin-top: 0; }
     .kpi-card--compact .kpi-header { margin-bottom: -2px; }
     .kpi-card--compact .kpi-value-row { gap: 10px; }
     .kpi-card--compact .kpi-goal-section,
@@ -78,7 +79,17 @@
     .kpi-card--compact .kpi-gauge-section { padding: 2px 0 0; }
     .kpi-card--compact .kpi-gauge-badges { margin-top: 0; }
 
-    /* ---- Card title (from sheet name) ---- */
+    /* ---- Title row (title + optional pace pill on one line) ---- */
+    .kpi-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .kpi-title-row .kpi-title {
+      margin-top: 0;
+    }
     .kpi-title {
       font-size: 18px;
       font-weight: 700;
@@ -105,6 +116,20 @@
       font-size: 12px;
       color: #a0aab4;
     }
+
+    /* ---- Pace banner (on-pace / at-risk / off-pace); inline in title/header row ---- */
+    .kpi-pace-banner {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .kpi-pace-on-pace  { background: #e6f9ee; color: #1a8a4a; }
+    .kpi-pace-at-risk  { background: #fff4e6; color: #b45309; }
+    .kpi-pace-off-pace { background: #fde8e8; color: #d32f2f; }
 
     /* ---- Big number ---- */
     .kpi-value-row {

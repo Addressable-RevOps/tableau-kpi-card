@@ -194,19 +194,38 @@
       closeSettingsPanel();
     }
 
-    // ---- Title ----
+    // ---- Pace (computed once; used in title row or header row to avoid extra space) ----
+    var paceGoal = settings.paceGoal || 'primary';
+    var pacePct = (paceGoal === 'secondary') ? kpi.goal2Pct : kpi.goalPct;
+    var showPace = settings.showPaceIndicator !== false &&
+      ((paceGoal === 'secondary')
+        ? (settings.showGoal2 && kpi.goal2Pct != null)
+        : (settings.showGoal && kpi.goalPct != null));
+    var paceState = (showPace && pacePct != null) ? (pacePct >= 80 ? 'on-pace' : (pacePct >= 60 ? 'at-risk' : 'off-pace')) : null;
+    var paceCopy = paceState === 'on-pace' ? 'On pace' : (paceState === 'at-risk' ? 'At risk' : (paceState === 'off-pace' ? 'Off pace' : ''));
+    var paceBanner = null;
+    if (showPace && paceState) {
+      paceBanner = document.createElement('span');
+      paceBanner.className = 'kpi-pace-banner kpi-pace-' + paceState;
+      paceBanner.textContent = paceCopy;
+    }
+
+    // ---- Title row (title + optional pace pill on one line) ----
     if (settings.showTitle) {
+      var titleRow = document.createElement('div');
+      titleRow.className = 'kpi-title-row';
       var title = document.createElement('div');
       title.className = 'kpi-title';
       title.textContent = settings.titleText || sheetName || kpi.label;
       var ts = parseInt(settings.titleSize, 10);
       if (ts > 0 && ts !== 18) title.style.fontSize = ts + 'px';
-      // Center title in gauge mode
       if (settings.cardLayout === 'gauge') title.style.textAlign = 'center';
-      card.appendChild(title);
+      if (paceBanner) titleRow.appendChild(paceBanner);
+      titleRow.appendChild(title);
+      card.appendChild(titleRow);
     }
 
-    // ---- Header (label + period) ----
+    // ---- Header (label + period); if no title, pace pill goes here ----
     if (settings.showHeader) {
       var valueLabelText = settings.valueLabel !== undefined
         ? settings.valueLabel
@@ -228,14 +247,24 @@
           (showPeriod
             ? '<span class="kpi-period">' + escapeHtml(kpi.periodLabel) + '</span>'
             : '');
+        if (paceBanner && !settings.showTitle) header.insertBefore(paceBanner, header.firstChild);
         card.appendChild(header);
       } else if (showPeriod) {
         var header2 = document.createElement('div');
         header2.className = 'kpi-header';
         if (isGaugeHeader) header2.style.justifyContent = 'center';
         header2.innerHTML = '<span class="kpi-period">' + escapeHtml(kpi.periodLabel) + '</span>';
+        if (paceBanner && !settings.showTitle) header2.insertBefore(paceBanner, header2.firstChild);
         card.appendChild(header2);
       }
+    }
+
+    // ---- Pace only (no title, no header) ----
+    if (paceBanner && !settings.showTitle && !settings.showHeader) {
+      var paceOnlyRow = document.createElement('div');
+      paceOnlyRow.className = 'kpi-title-row';
+      paceOnlyRow.appendChild(paceBanner);
+      card.appendChild(paceOnlyRow);
     }
 
     // ---- Shared delta badge helpers ----
