@@ -414,7 +414,7 @@ window.KPI.settingsPanel = (function () {
         { value: 'primary',   label: 'Primary goal' },
         { value: 'secondary', label: 'Secondary goal' }
       ], 'Which goal drives the on-pace pill (when enabled).');
-    addToggle(secGoal, 'Show pace indicator', 'showPaceIndicator', 'Show ON PACE / AT RISK / OFF PACE pill next to the title (off by default).');
+    addToggle(secGoal, 'Show pace indicator', 'showPaceIndicator', 'Show On Track / At Risk / Off Track pill next to the title (off by default).');
 
     // --- SECONDARY GOAL ---
     var secGoal2 = addSection('Secondary Goal');
