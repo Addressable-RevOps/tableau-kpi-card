@@ -22,8 +22,6 @@ window.KPI.utils = (function () {
     showDelta:        'kpi_showDelta',
     showGoal:         'kpi_showGoal',
     showGoal2:        'kpi_showGoal2',
-    showPaceIndicator:'kpi_showPaceIndicator',
-    paceGoal:         'kpi_paceGoal',
     showSparkline:    'kpi_showSparkline',
     showSparkLabels:  'kpi_showSparkLabels',
     showSparkPeriods: 'kpi_showSparkPeriods',
@@ -91,7 +89,6 @@ window.KPI.utils = (function () {
     showDelta: true,
     showGoal: true,
     showGoal2: true,
-    showPaceIndicator: false,
     showSparkline: true,
     showSparkLabels: true,
     showSparkPeriods: true,
@@ -126,7 +123,7 @@ window.KPI.utils = (function () {
 
     var stringKeys = [
       'titleText', 'titleSize', 'subtitleAlign',
-      'valueLabel', 'deltaLabel', 'goalLabel', 'goal2Label', 'paceGoal', 'ptdLabel',
+      'valueLabel', 'deltaLabel', 'goalLabel', 'goal2Label', 'ptdLabel',
       'ptdFieldName', 'ptdLegendLabel', 'dateFieldName', 'sparkHeight', 'deltaSize',
       'fmtPrefix', 'fmtSuffix', 'fmtDecimals', 'fmtDeltaDecimals',
       'padTop', 'padRight', 'padBottom', 'padLeft', 'cardWidth',
