@@ -91,7 +91,7 @@ window.KPI.utils = (function () {
     showDelta: true,
     showGoal: true,
     showGoal2: true,
-    showPaceIndicator: true,
+    showPaceIndicator: false,
     showSparkline: true,
     showSparkLabels: true,
     showSparkPeriods: true,
