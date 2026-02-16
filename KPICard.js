@@ -202,7 +202,7 @@
         ? (settings.showGoal2 && kpi.goal2Pct != null)
         : (settings.showGoal && kpi.goalPct != null));
     var paceState = (showPace && pacePct != null) ? (pacePct >= 80 ? 'on-pace' : (pacePct >= 60 ? 'at-risk' : 'off-pace')) : null;
-    var paceCopy = paceState === 'on-pace' ? 'On pace' : (paceState === 'at-risk' ? 'At risk' : (paceState === 'off-pace' ? 'Off pace' : ''));
+    var paceCopy = paceState === 'on-pace' ? 'ON PACE' : (paceState === 'at-risk' ? 'AT RISK' : (paceState === 'off-pace' ? 'OFF PACE' : ''));
     var paceBanner = null;
     if (showPace && paceState) {
       paceBanner = document.createElement('span');
