@@ -409,11 +409,12 @@ window.KPI.settingsPanel = (function () {
     var secGoal = addSection('Primary Goal');
     addToggle(secGoal, 'Show Primary Goal', 'showGoal');
     addField(secGoal, 'Goal Label', 'goalLabel', 'Goal', 'Blank = hide bar.', 'Goal');
-    addDropdown(secGoal, 'Pace based on', 'paceGoal',
-      [
-        { value: 'primary',   label: 'Primary goal' },
-        { value: 'secondary', label: 'Secondary goal' }
-      ], 'Which goal drives the on-pace pill (when enabled).');
+    var paceOptions = [
+      { value: 'primary',   label: 'Primary goal' },
+      { value: 'secondary', label: 'Secondary goal' }
+    ].concat(measures || []);
+    addDropdown(secGoal, 'Pace based on', 'paceGoal', paceOptions,
+      'Primary/secondary goal %, or a custom measure (add to view as Details) as the pace %.');
     addToggle(secGoal, 'Show pace indicator', 'showPaceIndicator', 'Show On Track / At Risk / Off Track pill next to the title (off by default).');
 
     // --- SECONDARY GOAL ---

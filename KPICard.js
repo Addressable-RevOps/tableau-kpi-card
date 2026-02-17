@@ -198,10 +198,14 @@
     var paceBanner = null;
     if (settings.showPaceIndicator) {
       var paceGoal = settings.paceGoal || 'primary';
-      var pacePct = (paceGoal === 'secondary') ? kpi.goal2Pct : kpi.goalPct;
+      var pacePct = (paceGoal === 'secondary')
+        ? kpi.goal2Pct
+        : (paceGoal === 'primary' ? kpi.goalPct : kpi.customPacePct);
       var showPace = (paceGoal === 'secondary')
         ? (settings.showGoal2 && kpi.goal2Pct != null)
-        : (settings.showGoal && kpi.goalPct != null);
+        : (paceGoal === 'primary')
+          ? (settings.showGoal && kpi.goalPct != null)
+          : (kpi.customPacePct != null);
       if (showPace && pacePct != null) {
         var paceState = pacePct >= 90 ? 'on-track' : (pacePct >= 80 ? 'at-risk' : 'off-track');
         var paceCopy = paceState === 'on-track' ? 'ON TRACK' : (paceState === 'at-risk' ? 'AT RISK' : 'OFF TRACK');

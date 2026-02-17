@@ -64,7 +64,7 @@ window.KPI.data = (function () {
 
   function resolveEncodings (encodingMap, columns, settings) {
     var resolved = {
-      valueCol: null, goalCol: null, goal2Col: null, dateCol: null, ptdCol: null
+      valueCol: null, goalCol: null, goal2Col: null, dateCol: null, ptdCol: null, paceCol: null
     };
     var colNameSet = new Set(columns.map(function (c) { return c.fieldName; }));
 
@@ -151,6 +151,21 @@ window.KPI.data = (function () {
           var searchLower = settings.ptdFieldName.toLowerCase();
           if (cnLower.includes(searchLower) || searchLower.includes(cnLower)) {
             resolved.ptdCol = cn2;
+            break;
+          }
+        }
+      }
+    }
+
+    if (settings && settings.paceGoal && settings.paceGoal !== 'primary' && settings.paceGoal !== 'secondary') {
+      if (colNameSet.has(settings.paceGoal)) {
+        resolved.paceCol = settings.paceGoal;
+      } else {
+        for (var cn3 of colNameSet) {
+          var cn3Lower = cn3.toLowerCase();
+          var paceLower = settings.paceGoal.toLowerCase();
+          if (cn3Lower.includes(paceLower) || paceLower.includes(cn3Lower)) {
+            resolved.paceCol = cn3;
             break;
           }
         }
@@ -307,12 +322,18 @@ window.KPI.data = (function () {
     // No date column — simple aggregate
     if (!r.dateCol) {
       var totalValue = 0, totalGoal = 0, totalGoal2 = 0;
+      var paceSum = 0, paceCount = 0;
       for (var _i = 0; _i < data.length; _i++) {
         var row = data[_i];
         totalValue += Number(row[r.valueCol]?.value) || 0;
         if (r.goalCol) totalGoal += Number(row[r.goalCol]?.value) || 0;
         if (r.goal2Col) totalGoal2 += Number(row[r.goal2Col]?.value) || 0;
+        if (r.paceCol) {
+          var pv = Number(row[r.paceCol]?.value);
+          if (!isNaN(pv)) { paceSum += pv; paceCount++; }
+        }
       }
+      var customPacePct = r.paceCol && paceCount ? Math.round(paceSum / paceCount) : null;
       return {
         label: valueLabel,
         currentValue: totalValue,
@@ -329,6 +350,7 @@ window.KPI.data = (function () {
           ? Math.round((totalValue / totalGoal2) * 100) : null,
         formattedGoal2: r.goal2Col ? globalFmt(totalGoal2) : null,
         goal2Label: r.goal2Field ? r.goal2Field.name : 'Secondary Goal',
+        customPacePct: customPacePct,
         sparkData: null,
         periodLabel: null,
         globalFmt: globalFmt
@@ -360,7 +382,7 @@ window.KPI.data = (function () {
 
       if (!periodMap.has(periodKey)) {
         periodMap.set(periodKey, {
-          value: 0, goal: 0, goal2: 0, ptdValue: 0, sortKey: sortKey,
+          value: 0, goal: 0, goal2: 0, ptdValue: 0, paceSum: 0, paceCount: 0, sortKey: sortKey,
           label: formatPeriodLabel(rawLabel, sortKey, r.dateFieldName),
           rows: []
         });
@@ -378,7 +400,15 @@ window.KPI.data = (function () {
       if (r.goalCol) bucket.goal += Number(row2[r.goalCol]?.value) || 0;
       if (r.goal2Col) bucket.goal2 += Number(row2[r.goal2Col]?.value) || 0;
       if (r.ptdCol) bucket.ptdValue += Number(row2[r.ptdCol]?.value) || 0;
+      if (r.paceCol) {
+        var paceVal = Number(row2[r.paceCol]?.value);
+        if (!isNaN(paceVal)) { bucket.paceSum += paceVal; bucket.paceCount++; }
+      }
     }
+
+    periodMap.forEach(function (bucket) {
+      bucket.pace = bucket.paceCount ? Math.round(bucket.paceSum / bucket.paceCount) : null;
+    });
 
     var allPeriods = Array.from(periodMap.values()).sort(function (a, b) {
       if (a.sortKey < b.sortKey) return -1;
@@ -465,6 +495,7 @@ window.KPI.data = (function () {
       ? periods[0].label + ' \u2014 ' + current.label
       : current.label;
 
+    var customPacePct = r.paceCol && current.pace != null ? current.pace : null;
     return {
       label: valueLabel,
       currentValue: current.value,
@@ -475,6 +506,7 @@ window.KPI.data = (function () {
       goalValue: goalValue, goalPct: goalPct, formattedGoal: formattedGoal,
       goal2Value: goal2Value, goal2Pct: goal2Pct, formattedGoal2: formattedGoal2,
       goal2Label: r.goal2Field ? r.goal2Field.name : 'Secondary Goal',
+      customPacePct: customPacePct,
       sparkData: sparkData,
       ptdSparkData: ptdSparkData,
       periodLabel: periodLabel,
